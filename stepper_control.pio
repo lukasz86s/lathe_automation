@@ -18,8 +18,16 @@
 
 
 .program squarewave
+    
     set pindirs, 1 ; Set pin to output
-again:
+    pull block  ; wait for first data
+    mov x, osr
+.wrap_target
+    pull noblock
+    mov x, osr
     set pins, 1 [7] ; Drive pin high and then delay for one cycle
-    set pins, 0 [13]; Drive pin low : 15 us 1 set 1 jump 13 nop
-    jmp again ; Set PC to label `again`
+    set pins, 0 ; Drive pin low 
+    sleep_loop:
+        jmp x-- , sleep_loop
+    mov x, osr
+.wrap

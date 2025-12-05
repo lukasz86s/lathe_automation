@@ -57,14 +57,14 @@ int main()
     pio_sm_init(pio, sm , offset, &c);
     // change cloc for pio 150 MHz / 150 MHz = 1us
     pio_sm_set_clkdiv(pio, sm, 150.0f);
+    pio_sm_clear_fifos(pio, sm);
     pio_sm_set_enabled(pio, sm, true);
-    
-    
+
     while (true) {
         printf("Hello, world!\n");
         // make screen black
         st7789_fill(0x001F);
-       
+        pio_sm_put(pio, sm, 10);
 
         // wait 1 second
         sleep_ms(1000);
@@ -73,6 +73,7 @@ int main()
         st7789_fill(color565(222, 24, 222));
         st7789_draw_text(8, 8, "test A6&8", 0x0000, 5);
         // wait 1 second
+        pio_sm_put(pio, sm, 3);
         sleep_ms(1000);
 
     }
