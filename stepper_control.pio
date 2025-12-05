@@ -1,0 +1,25 @@
+.program stepgen
+    set pindirs, 1 ; Set pin to output
+    .wrap_target
+
+        pull         ; pobierz period_ticks
+        mov x, osr        ; x = okres w taktach
+
+        ; --- faza impulsu HIGH ---
+        set pins, 1 
+        ; 8 us przy 125 MHz = 1000 taktów
+        nop[8] 
+
+        ; --- obniż impuls ---
+        set pins, 0  ; STEP = 0
+        delay_loop:
+            jmp x--, delay_loop ; pętla odliczająca pozostały czas
+    .wrap
+
+
+.program squarewave
+    set pindirs, 1 ; Set pin to output
+again:
+    set pins, 1 [7] ; Drive pin high and then delay for one cycle
+    set pins, 0 [13]; Drive pin low : 15 us 1 set 1 jump 13 nop
+    jmp again ; Set PC to label `again`
