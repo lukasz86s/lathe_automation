@@ -47,12 +47,12 @@ FetchContent_MakeAvailable(st7789)
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(lathe_automation lathe_automation.c
-     fonts/fonts.c
+add_executable(lathe_automation src/lathe_automation.c
+     src/fonts/fonts.c
     )
-target_include_directories(lathe_automation PRIVATE ${CMAKE_CURRENT_LIST_DIR}/fonts/include)
+target_include_directories(lathe_automation PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src/fonts/include)
 
-pico_generate_pio_header(lathe_automation ${CMAKE_CURRENT_LIST_DIR}/stepper_control.pio)
+pico_generate_pio_header(lathe_automation ${CMAKE_CURRENT_LIST_DIR}/src/stepper_control.pio)
 
 
 pico_set_program_name(lathe_automation "lathe_automation")
@@ -68,6 +68,7 @@ target_link_libraries(lathe_automation
         pico_st7789
         hardware_spi
         hardware_pio
+        hardware_gpio      
 )
 
 

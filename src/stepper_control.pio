@@ -1,0 +1,33 @@
+
+.program test1
+    set pindirs, 1 ; Set pin to output
+.wrap_target
+    pull block  ; wait for numbers of steps
+    mov y, osr
+    pull block  ; wait for period
+    mov x, osr
+
+    steps_loop:
+        set pins, 1 [17] ; Drive pin high and then delay for one cycle
+        set pins, 0 ; Drive pin low 
+        sleep_loop:
+            jmp x-- , sleep_loop
+        mov x, osr
+        jmp y-- , steps_loop ; decrease steps
+.wrap
+
+
+.program squarewave
+    
+    set pindirs, 1 ; Set pin to output
+    pull block  ; wait for first data
+    mov x, osr
+.wrap_target
+    pull noblock
+    mov x, osr
+    set pins, 1 [7] ; Drive pin high and then delay for one cycle
+    set pins, 0 ; Drive pin low 
+    sleep_loop:
+        jmp x-- , sleep_loop
+    mov x, osr
+.wrap
