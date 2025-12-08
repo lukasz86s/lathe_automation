@@ -6,6 +6,7 @@
 #include "hardware/gpio.h"
 #include "stepper_control.pio.h"
 #include "fonts.h"
+#include "buttons.h"
 
 
 PIO pio = pio0;
@@ -49,7 +50,17 @@ void add_test_prog( pio_sm_config *c, uint *offset){
     pio_sm_set_enabled(pio, sm, true);
 
 }
-bool debouncer_callback(repeating_timer_t *rt);
+void print_test(void){
+    printf("heello world\n");
+}
+bool dbounceCallback(repeating_timer_t*r){
+    timer_callbak();
+    return true;
+}
+void print_test_st7789(void){
+        st7789_fill(color565(222, 24, 222));
+        st7789_draw_text(8, 35, "button test", 0x0000, 3);
+}
 
 // lcd configuration
 const struct st7789_config lcd_config = {
@@ -105,18 +116,15 @@ int main()
     button_holder_t button_holder = {0};
     button_holder.gpio_nr[0] = BUTTON_L;
     button_holder.gpio_nr[1] = BUTTON_R;
-    //-------------------configure debauncer timer -----//
-
-    //-----------------------------------------------//
 
     uint offset ;//= pio_add_program(pio, &squarewave_program);
     pio_sm_config c ; //= squarewave_program_get_default_config(offset);
     add_square_prog(&c, &offset);
     // initialize the pin for PIO
     pio_gpio_init(pio, pin_nr);
-    char text[32] ;
+    char text[32] = "test\0";
     static repeating_timer_t deb_timer;
-    add_repeating_timer_ms(1, debouncer_callback, &button_holder, &deb_timer);
+    add_repeating_timer_ms(10, dbounceCallback, &button_holder, &deb_timer);
     while (true) {
         // make screen black
         st7789_fill(0x001F);
@@ -135,20 +143,8 @@ int main()
         
         //change_sm_program(pio,sm, &test1_program, &squarewave_program,&offset);
         add_square_prog(&c, &offset);
-        if((button_holder.buttons_on_flag)){
-            for(uint i = 0 ; i < NUM_BUTTONS; i++)
-            {   
-                if(button_holder.buttons_on_flag & (1u << button_holder.gpio_nr[i]))
-                {
-                    sprintf(text, "Buton  %d", button_holder.gpio_nr[i] );
-                    button_holder.buttons_on_flag &= ~(1u << button_holder.gpio_nr[i]);
-                }
+        buttonDebauncer(BUTTON_L,0, 0, print_test, print_test);
 
-            }
-        }else
-        {
-        sprintf(text, "Buton  %s", "OFF" );
-        }
         st7789_draw_text(8, 35, text, 0x0000, 3);
         
 
@@ -159,28 +155,4 @@ int main()
     }
 }
 
-bool debouncer_callback(repeating_timer_t *rt){
-    button_holder_t *buttons = rt->user_data;
-    for(uint i = 0; i < NUM_BUTTONS; i++){
-        if(!gpio_get(buttons->gpio_nr[i]) ){
-            if(!(buttons->status_flag & (1u<< buttons->gpio_nr[i]) ))
-            {
-                buttons->debouce_tims[i] = DEBOUNCE_TIM; 
-            }
-            buttons->status_flag |= (1<< buttons->gpio_nr[i]);    
-        }else
-        {
-            buttons->status_flag &= ~(1u << buttons->gpio_nr[i]);
-            // add buttons ->debounce_tims[i] = 0 ; if button is`t push , dont cout
-        }
 
-        if ( ( buttons->status_flag & (1u << buttons->gpio_nr[i])) && !buttons->debouce_tims[i] )
-        {
-            buttons->buttons_on_flag |= (1u << buttons->gpio_nr[i]);
-            buttons->status_flag &= ~(1u << buttons->gpio_nr[i]);
-        }
-
-        if(buttons->debouce_tims[i]) buttons->debouce_tims[i]--;
-    }
-    return true;
-}

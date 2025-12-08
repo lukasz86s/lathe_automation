@@ -48,15 +48,16 @@ FetchContent_MakeAvailable(st7789)
 # Add executable. Default name is the project name, version 0.1
 
 add_executable(lathe_automation src/lathe_automation.c
-     src/fonts/fonts.c
+     src/fonts/fonts.c src/buttons/buttons.c
+
     )
-target_include_directories(lathe_automation PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src/fonts/include)
+target_include_directories(lathe_automation PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src/fonts/include ${CMAKE_CURRENT_LIST_DIR}/src/buttons/include)
 
 pico_generate_pio_header(lathe_automation ${CMAKE_CURRENT_LIST_DIR}/src/stepper_control.pio)
 
 
 pico_set_program_name(lathe_automation "lathe_automation")
-pico_set_program_version(lathe_automation "0.1")
+pico_set_program_version(lathe_automation "0.3")
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(lathe_automation 0)
