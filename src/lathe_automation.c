@@ -12,6 +12,10 @@
 PIO pio = pio0;
 uint sm = 0;
 uint pin_nr = 0;
+PIO pio_encode = pio1;
+uint sm_encode = 0;
+uint pin_nr_encode = 18;
+
 
 
 void add_square_prog( pio_sm_config *c, uint * offset)
@@ -48,8 +52,9 @@ void add_test_prog( pio_sm_config *c, uint *offset){
     pio_sm_set_clkdiv(pio, sm, 150.0f);
     pio_sm_clear_fifos(pio, sm);
     pio_sm_set_enabled(pio, sm, true);
-
 }
+
+
 void print_test(void){
     printf("heello world\n");
 }
@@ -82,14 +87,7 @@ typedef enum{
     BUTTON_R= 17,
     NUM_BUTTONS = 2
 }button_t;
-typedef struct
-{
-    volatile uint32_t status_flag;
-    volatile uint32_t buttons_on_flag;
-    volatile uint8_t gpio_nr[NUM_BUTTONS];
-    volatile uint debouce_tims[NUM_BUTTONS];
 
-}button_holder_t;
 
 int main()
 {
@@ -113,44 +111,45 @@ int main()
     gpio_set_dir(BUTTON_R, GPIO_IN);
     gpio_pull_up(BUTTON_R);
     //-----------------------------------------------//
-    button_holder_t button_holder = {0};
-    button_holder.gpio_nr[0] = BUTTON_L;
-    button_holder.gpio_nr[1] = BUTTON_R;
 
-    uint offset ;//= pio_add_program(pio, &squarewave_program);
-    pio_sm_config c ; //= squarewave_program_get_default_config(offset);
+    uint offset ;
+    pio_sm_config c ; 
+    uint offset_encode ;
+    pio_sm_config c_encode;
     add_square_prog(&c, &offset);
+    init_encoder(&c_encode, &offset_encode, pio_encode, sm_encode, 18, 19);
     // initialize the pin for PIO
     pio_gpio_init(pio, pin_nr);
-    char text[32] = "test\0";
+
     static repeating_timer_t deb_timer;
-    add_repeating_timer_ms(10, dbounceCallback, &button_holder, &deb_timer);
+    add_repeating_timer_ms(10, dbounceCallback, NULL, &deb_timer);
+    pio_sm_put(pio, sm, 30);
+
+    uint16_t pixel_position = 120;
+    st7789_fill(0x001F);
+    st7789_draw_text(pixel_position, 60, "#", 0x0000, 3);
     while (true) {
-        // make screen black
-        st7789_fill(0x001F);
-        //change_sm_program(pio,sm, &squarewave_program, &test1_program, &offset);
-        //send number of steps 
-        add_test_prog(&c, &offset);
-        pio_sm_put(pio, sm, 1000);
-        // send period
-        pio_sm_put(pio, sm, 100);
-        // wait 1 second
-        sleep_ms(500);
-    
-        // make screen red
-        st7789_fill(color565(222, 24, 222));
-        st7789_draw_text(8, 8, "test A6&8", 0x0000, 3);
-        
-        //change_sm_program(pio,sm, &test1_program, &squarewave_program,&offset);
-        add_square_prog(&c, &offset);
+
         buttonDebauncer(BUTTON_L,0, 0, print_test, print_test);
-
-        st7789_draw_text(8, 35, text, 0x0000, 3);
+        buttonDebauncer(BUTTON_R,0, 0, print_test, print_test);
         
 
-        // wait 1 second
-        pio_sm_put(pio, sm, 30);
-        sleep_ms(500);
+        uint len = pio_sm_get_rx_fifo_level(pio_encode, sm_encode);
+
+        if (len){
+            uint encoder_mean = 0;
+            for (uint i = 0; i < len; i++){
+                encoder_mean += pio_sm_get(pio_encode, sm_encode);
+            }
+            encoder_mean /= len;
+            printf("encoder_mean: %d\n", encoder_mean);
+
+            if(encoder_mean >= 4) pixel_position ++;
+            else pixel_position --;
+            st7789_fill(0x001F);
+            st7789_draw_text(pixel_position, 60, "#", 0x0000, 3);
+        }
+        
 
     }
 }

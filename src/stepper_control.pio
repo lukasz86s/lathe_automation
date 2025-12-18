@@ -31,3 +31,37 @@
         jmp x-- , sleep_loop
     mov x, osr
 .wrap
+
+
+.program encoder_handler
+.define ROTATE_RIGHT 5
+.define ROTATE_LEFT 3
+set pindirs, 0
+set y, 0
+read:
+    mov x, y
+    in null, 32
+    in pins, 2 
+    mov y, isr
+    jmp x!=y, check_different
+    jmp read
+
+check_different:
+    in x, 31
+    in null, 31
+    mov x, isr
+    jmp !x, c1_old_zero
+c1_old_not_zero:
+    jmp pin, rotate_left
+    jmp rotate_right
+c1_old_zero:
+    jmp pin, rotate_right
+rotate_left:
+    set x, ROTATE_LEFT
+    jmp send
+rotate_right:
+    set x, ROTATE_RIGHT
+send:
+    mov isr, x
+    push noblock
+    jmp read
